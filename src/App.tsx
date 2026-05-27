@@ -210,7 +210,7 @@ export default function App() {
         <img src="/logo.png" alt="Logo" className="w-32 object-contain" />
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 pb-24">
         {SURVEY_MODULES.map(module => (
           <div key={module.id} className="mb-8">
             <h3 className="text-xl font-bold border-b border-blue-500 text-blue-900 mb-4 pb-1">{module.title}</h3>
@@ -254,7 +254,7 @@ export default function App() {
         ))}
       </div>
 
-      <div className="mt-12 pt-8 border-t border-slate-200 flex justify-center break-inside-avoid">
+      <div className="fixed bottom-0 left-0 right-0 w-full flex justify-center bg-white print:pb-4 z-50">
         <img src="/footer.PNG" alt="Footer" className="w-full max-w-4xl object-contain" />
       </div>
     </div>
