@@ -25,7 +25,7 @@ export const SurveyItemCard: React.FC<SurveyItemCardProps> = ({
     notes: ''
   };
 
-  const isCompleted = currentData.photos.length > 0 || (!itemDef.isMandatory && currentData.notes.length > 0);
+  const isCompleted = currentData.photos.length > 0 || currentData.notes.length > 0;
 
   const handleAddPhotos = (newPhotos: CapturedPhoto[]) => {
     onUpdateData({

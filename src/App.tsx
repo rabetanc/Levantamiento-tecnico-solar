@@ -58,22 +58,21 @@ export default function App() {
   };
 
   const calculateProgress = () => {
-    let totalMandatory = 0;
-    let completedMandatory = 0;
+    let totalItems = 0;
+    let completedItems = 0;
     
     SURVEY_MODULES.forEach(mod => {
       mod.items.forEach(item => {
-        if (item.isMandatory) {
-          totalMandatory++;
-          const data = survey.itemsData[item.id];
-          if (data && data.photos.length > 0) {
-            completedMandatory++;
-          }
+        totalItems++;
+        const data = survey.itemsData[item.id];
+        // Consideramos completado si hay al menos una foto (o una nota)
+        if (data && (data.photos.length > 0 || data.notes.length > 0)) {
+          completedItems++;
         }
       });
     });
 
-    return { total: totalMandatory, completed: completedMandatory, percentage: Math.round((completedMandatory / totalMandatory) * 100) };
+    return { total: totalItems, completed: completedItems, percentage: Math.round((completedItems / totalItems) * 100) || 0 };
   };
 
   const progress = calculateProgress();
@@ -81,7 +80,7 @@ export default function App() {
   const handleExport = () => {
     if (progress.completed < progress.total) {
       try {
-        const confirmPrint = window.confirm(`Faltan ${progress.total - progress.completed} campos obligatorios por completar. ¿Deseas descargar el PDF de todas formas?`);
+        const confirmPrint = window.confirm(`Tienes ${progress.completed} de ${progress.total} campos completados. ¿Deseas descargar el PDF de todas formas?`);
         if (!confirmPrint) return;
       } catch (e) {
         // Fallback si el iframe bloquea modales
@@ -184,7 +183,7 @@ export default function App() {
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
           <div className="flex-1">
             <p className="text-sm font-semibold text-slate-800">Progreso: {progress.percentage}%</p>
-            <p className="text-xs text-slate-500">{progress.completed} de {progress.total} obligatorios</p>
+            <p className="text-xs text-slate-500">{progress.completed} de {progress.total} campos completados</p>
           </div>
           <button 
             onClick={handleExport}
@@ -199,13 +198,16 @@ export default function App() {
 
     {/* Print Report - Only visible during printing */}
     <div className="hidden print:block font-sans text-slate-900 bg-white p-8">
-      <div className="mb-6 border-b-2 border-slate-200 pb-4">
-        <h1 className="text-2xl font-bold text-[#002f6c]">Levantamiento Técnico Solar</h1>
-        <h2 className="text-xl font-semibold mt-2">Proyecto: {survey.projectName || 'Sin nombre'}</h2>
-        <p className="text-sm text-slate-500 mt-1">Fecha: {new Date(survey.dateUpdated).toLocaleString()}</p>
-        <p className="text-sm font-semibold mt-2">
-          Progreso General: {progress.completed} de {progress.total} campos requeridos completados
-        </p>
+      <div className="mb-6 border-b-2 border-slate-200 pb-4 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-[#002f6c]">Levantamiento Técnico Solar</h1>
+          <h2 className="text-xl font-semibold mt-2">Proyecto: {survey.projectName || 'Sin nombre'}</h2>
+          <p className="text-sm text-slate-500 mt-1">Fecha: {new Date(survey.dateUpdated).toLocaleString()}</p>
+          <p className="text-sm font-semibold mt-2">
+            Progreso General: {progress.completed} de {progress.total} campos completados
+          </p>
+        </div>
+        <img src="/logo.png" alt="Logo" className="w-32 object-contain" />
       </div>
 
       <div className="space-y-8">
@@ -250,6 +252,10 @@ export default function App() {
             })}
           </div>
         ))}
+      </div>
+
+      <div className="mt-12 pt-8 border-t border-slate-200 flex justify-center break-inside-avoid">
+        <img src="/footer.PNG" alt="Footer" className="w-full max-w-4xl object-contain" />
       </div>
     </div>
     </>
