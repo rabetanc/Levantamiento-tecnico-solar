@@ -1,34 +1,72 @@
-import React, { useRef } from 'react';
-import { Camera, Upload, X } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Camera, Upload, X, Loader2 } from 'lucide-react';
 import { CapturedPhoto } from '../types';
 
 interface PhotoUploaderProps {
   photos: CapturedPhoto[];
-  onAddPhoto: (photo: CapturedPhoto) => void;
+  onAddPhotos: (photos: CapturedPhoto[]) => void;
   onRemovePhoto: (photoId: string) => void;
 }
 
-export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, onAddPhoto, onRemovePhoto }) => {
+export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, onAddPhotos, onRemovePhoto }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      Array.from(e.target.files).forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            onAddPhoto({
-              id: Math.random().toString(36).substring(7),
-              dataUrl: event.target.result as string,
-              timestamp: Date.now(),
-            });
+  // Compress image using Canvas API to preserve mobile performance
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
           }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8)); // 80% quality JPEG
         };
-        reader.readAsDataURL(file);
-      });
-      // reset input
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setIsProcessing(true);
+      const newPhotos: CapturedPhoto[] = [];
+      const files = Array.from(e.target.files);
+      
+      for (const file of files) {
+        const dataUrl = await compressImage(file);
+        newPhotos.push({
+          id: Math.random().toString(36).substring(7),
+          dataUrl,
+          timestamp: Date.now(),
+        });
+      }
+      
+      onAddPhotos(newPhotos);
       e.target.value = '';
+      setIsProcessing(false);
     }
   };
 
@@ -55,16 +93,18 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, onAddPhoto
         
         <button 
           onClick={() => cameraInputRef.current?.click()}
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
+          disabled={isProcessing}
+          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
         >
-          <Camera size={20} />
+          {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
           <span>Cámara</span>
         </button>
         <button 
           onClick={() => fileInputRef.current?.click()}
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-medium transition-colors border border-slate-300"
+          disabled={isProcessing}
+          className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-medium transition-colors border border-slate-300 disabled:opacity-50"
         >
-          <Upload size={20} />
+          {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
           <span>Galería</span>
         </button>
       </div>

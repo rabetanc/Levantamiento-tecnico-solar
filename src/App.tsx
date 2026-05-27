@@ -80,17 +80,26 @@ export default function App() {
 
   const handleExport = () => {
     if (progress.completed < progress.total) {
-      alert(`Faltan ${progress.total - progress.completed} campos obligatorios por completar.`);
-      return;
+      try {
+        const confirmPrint = window.confirm(`Faltan ${progress.total - progress.completed} campos obligatorios por completar. ¿Deseas descargar el PDF de todas formas?`);
+        if (!confirmPrint) return;
+      } catch (e) {
+        // Fallback si el iframe bloquea modales
+        console.warn('Confirm dialog blocked, proceeding to export anyway.');
+      }
     }
-    // Simulate export/sync
-    alert('Levantamiento exportado correctamente. El ingeniero recibirá el JSON y las imágenes.');
-    // In a real app this would call an API, we can reset or mark as synced.
+    
+    // Generar PDF imprimiendo (ideal para móviles y navegadores que tienen "Save as PDF")
     setSurvey(prev => ({ ...prev, status: 'SYNCED' }));
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900">
+    <>
+    {/* Main Application - Hidden during print */}
+    <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 print:hidden">
       {/* Header */}
       <header className="bg-[#002f6c] text-white sticky top-0 z-10 shadow-md">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -179,17 +188,70 @@ export default function App() {
           </div>
           <button 
             onClick={handleExport}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-sm transition-all ${
-              progress.completed === progress.total 
-                ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-            }`}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-sm transition-all bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md"
           >
             <Save size={20} />
-            Sincronizar
+            Descargar PDF
           </button>
         </div>
       </div>
     </div>
+
+    {/* Print Report - Only visible during printing */}
+    <div className="hidden print:block font-sans text-slate-900 bg-white p-8">
+      <div className="mb-6 border-b-2 border-slate-200 pb-4">
+        <h1 className="text-2xl font-bold text-[#002f6c]">Levantamiento Técnico Solar</h1>
+        <h2 className="text-xl font-semibold mt-2">Proyecto: {survey.projectName || 'Sin nombre'}</h2>
+        <p className="text-sm text-slate-500 mt-1">Fecha: {new Date(survey.dateUpdated).toLocaleString()}</p>
+        <p className="text-sm font-semibold mt-2">
+          Progreso General: {progress.completed} de {progress.total} campos requeridos completados
+        </p>
+      </div>
+
+      <div className="space-y-8">
+        {SURVEY_MODULES.map(module => (
+          <div key={module.id} className="mb-8">
+            <h3 className="text-xl font-bold border-b border-blue-500 text-blue-900 mb-4 pb-1">{module.title}</h3>
+            {module.items.map(item => {
+              const data = survey.itemsData[item.id];
+              const isFilled = data && (data.photos.length > 0 || data.notes);
+              
+              if (!isFilled) {
+                return (
+                  <div key={item.id} className="mb-6 pb-4 border-b border-slate-100 flex items-center justify-between opacity-50">
+                    <h4 className="text-md font-bold text-slate-500">{item.id} {item.title}</h4>
+                    <span className="text-xs text-red-500 border border-red-500 px-2 py-1 rounded">No completado</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={item.id} className="mb-6 pb-4 border-b border-slate-100 break-inside-avoid">
+                  <h4 className="text-md font-bold mb-2 text-slate-800">{item.id} {item.title}</h4>
+                  
+                  {data.notes && (
+                    <div className="mb-3 bg-slate-50 p-3 border border-slate-200 rounded-lg">
+                      <p className="text-sm text-slate-700 font-medium">Notas:</p>
+                      <p className="text-sm text-slate-800 whitespace-pre-wrap">{data.notes}</p>
+                    </div>
+                  )}
+                  
+                  {data.photos.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {data.photos.map((photo, idx) => (
+                        <div key={photo.id} className="aspect-square bg-slate-100 border border-slate-200 rounded-lg overflow-hidden flex items-center justify-center">
+                          <img src={photo.dataUrl} className="w-full h-full object-cover" alt={`Evidencia ${idx + 1}`} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+    </>
   );
 }

@@ -27,10 +27,10 @@ export const SurveyItemCard: React.FC<SurveyItemCardProps> = ({
 
   const isCompleted = currentData.photos.length > 0 || (!itemDef.isMandatory && currentData.notes.length > 0);
 
-  const handleAddPhoto = (photo: CapturedPhoto) => {
+  const handleAddPhotos = (newPhotos: CapturedPhoto[]) => {
     onUpdateData({
       ...currentData,
-      photos: [...currentData.photos, photo]
+      photos: [...currentData.photos, ...newPhotos]
     });
   };
 
@@ -100,7 +100,7 @@ export const SurveyItemCard: React.FC<SurveyItemCardProps> = ({
                 <h4 className="text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Evidencia Fotográfica</h4>
                 <PhotoUploader 
                   photos={currentData.photos}
-                  onAddPhoto={handleAddPhoto}
+                  onAddPhotos={handleAddPhotos}
                   onRemovePhoto={handleRemovePhoto}
                 />
               </div>
