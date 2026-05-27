@@ -1,0 +1,10 @@
+{
+  "name": "Levantamiento Técnico Solar",
+  "description": "Aplicativo móvil offline-first para el levantamiento técnico y comercial (site survey) en proyectos de energía solar fotovoltaica. Captura estructurada de 16 pasos, soporte offline y guías técnicas.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
