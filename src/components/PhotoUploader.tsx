@@ -21,8 +21,8 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, onAddPhoto
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200;
-          const MAX_HEIGHT = 1200;
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
           let width = img.width;
           let height = img.height;
 
@@ -41,7 +41,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, onAddPhoto
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8)); // 80% quality JPEG
+          resolve(canvas.toDataURL('image/jpeg', 0.7)); // 70% quality JPEG
         };
         img.src = e.target?.result as string;
       };

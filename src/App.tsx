@@ -7,40 +7,49 @@ import React, { useState, useEffect } from 'react';
 import { SURVEY_MODULES } from './data';
 import { Survey, SurveyItemData } from './types';
 import { SurveyItemCard } from './components/SurveyItemCard';
-import { Save, CloudOff, Sun, FileCheck2, User, Building, MapPin } from 'lucide-react';
+import { Save, CloudOff, Sun, FileCheck2, User, Building, MapPin, Loader2 } from 'lucide-react';
+import { get, set } from 'idb-keyval';
 
 const STORAGE_KEY = 'paisolar_current_survey';
 
 export default function App() {
-  const [survey, setSurvey] = useState<Survey>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing saved survey', e);
-      }
-    }
-    return {
-      id: Math.random().toString(36).substring(7),
-      projectName: '',
-      dateCreated: Date.now(),
-      dateUpdated: Date.now(),
-      status: 'DRAFT',
-      itemsData: {},
-    };
+  const [isLoading, setIsLoading] = useState(true);
+  const [survey, setSurvey] = useState<Survey>({
+    id: Math.random().toString(36).substring(7),
+    projectName: '',
+    dateCreated: Date.now(),
+    dateUpdated: Date.now(),
+    status: 'DRAFT',
+    itemsData: {},
   });
 
   const [openItemId, setOpenItemId] = useState<string | null>('1.1');
   const [isSaved, setIsSaved] = useState(true);
 
-  // Auto-save to localStorage
+  // Load from IndexedDB on mount
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(survey));
-    setIsSaved(true);
-    const timer = setTimeout(() => setIsSaved(false), 2000); // just visual feedback
-    return () => clearTimeout(timer);
-  }, [survey]);
+    get(STORAGE_KEY)
+      .then((saved: Survey | undefined) => {
+        if (saved) {
+          setSurvey({
+            ...saved,
+            // Ensure if any migrations are needed, they happen here
+          });
+        }
+      })
+      .catch((err) => console.error('Error loading survey from IDB', err))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  // Auto-save to IndexedDB
+  useEffect(() => {
+    if (!isLoading) {
+      set(STORAGE_KEY, survey).catch(err => console.error('Error saving survey to IDB', err));
+      setIsSaved(true);
+      const timer = setTimeout(() => setIsSaved(false), 2000); // just visual feedback
+      return () => clearTimeout(timer);
+    }
+  }, [survey, isLoading]);
 
   const updateItemData = (data: SurveyItemData) => {
     setSurvey(prev => ({
@@ -94,6 +103,17 @@ export default function App() {
       window.print();
     }, 100);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-slate-500 font-medium font-sans">Cargando datos locales...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
