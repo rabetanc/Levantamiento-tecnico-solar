@@ -217,22 +217,31 @@ export default function App() {
     </div>
 
     {/* Print Report - Only visible during printing */}
-    <div className="hidden print:block font-sans text-slate-900 bg-white p-8">
-      <div className="mb-6 border-b-2 border-slate-200 pb-4 flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-[#002f6c]">Levantamiento Técnico Solar</h1>
-          <h2 className="text-xl font-semibold mt-2">Proyecto: {survey.projectName || 'Sin nombre'}</h2>
-          <p className="text-sm text-slate-500 mt-1">Fecha: {new Date(survey.dateUpdated).toLocaleString()}</p>
-          <p className="text-sm font-semibold mt-2">
-            Progreso General: {progress.completed} de {progress.total} campos completados
-          </p>
-        </div>
-        <img src="/logo.png" alt="Logo" className="w-32 object-contain" />
-      </div>
-
-      <div className="space-y-8 pb-24">
-        {SURVEY_MODULES.map(module => (
-          <div key={module.id} className="mb-8">
+    <div className="hidden print:block font-sans text-slate-900 bg-white p-8 relative">
+      <table className="w-full">
+        <thead>
+          <tr>
+            <td>
+              <div className="mb-6 border-b-2 border-slate-200 pb-4 flex justify-between items-start">
+                <div>
+                  <h1 className="text-2xl font-bold text-[#002f6c]">Levantamiento Técnico Solar</h1>
+                  <h2 className="text-xl font-semibold mt-2">Proyecto: {survey.projectName || 'Sin nombre'}</h2>
+                  <p className="text-sm text-slate-500 mt-1">Fecha: {new Date(survey.dateUpdated).toLocaleString()}</p>
+                  <p className="text-sm font-semibold mt-2">
+                    Progreso General: {progress.completed} de {progress.total} campos completados
+                  </p>
+                </div>
+                <img src="/logo.png" alt="Logo" className="w-32 object-contain" />
+              </div>
+            </td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div className="space-y-8 pb-4">
+                {SURVEY_MODULES.map(module => (
+                  <div key={module.id} className="mb-8">
             <h3 className="text-xl font-bold border-b border-blue-500 text-blue-900 mb-4 pb-1">{module.title}</h3>
             {module.items.map(item => {
               const data = survey.itemsData[item.id];
@@ -272,10 +281,22 @@ export default function App() {
             })}
           </div>
         ))}
-      </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>
+              {/* Espacio reservado en el tfoot para garantizar que el footer fijo no solape el contenido en cada página */}
+              <div className="h-28"></div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
 
       <div className="fixed bottom-0 left-0 right-0 w-full flex justify-center bg-white print:pb-4 z-50">
-        <img src="/footer.PNG" alt="Footer" className="w-full max-w-4xl object-contain" />
+        <img src="/footer.PNG" alt="Footer" className="w-full max-w-4xl max-h-24 object-contain mx-auto" />
       </div>
     </div>
     </>
